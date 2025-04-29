@@ -1,0 +1,35 @@
+{
+  "name": "atlaslibre-plugin-flightradar24",
+  "version": "1.0.1",
+  "description": "AtlasLibre Chrome Plugin for Flightradar24",
+  "main": "index.js",
+  "scripts": {
+    "watch": "webpack --config webpack/webpack.dev.js --watch",
+    "build": "webpack --config webpack/webpack.prod.js",
+    "style": "prettier --write \"src/**/*.{ts,tsx}\""
+  },
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/atlaslibre/plugin-flightradar24.git"
+  },
+  "dependencies": {
+    "@duckdb/duckdb-wasm": "^1.29.1-dev132.0",
+    "pbf": "^4.0.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/chrome": "0.0.158",
+    "@types/react": "^18.0.29",
+    "@types/react-dom": "^18.0.11",
+    "copy-webpack-plugin": "^9.0.1",
+    "prettier": "^2.2.1",
+    "ts-loader": "^8.0.0",
+    "typescript": "^5.0.4",
+    "webpack": "^5.94.0",
+    "webpack-cli": "^4.0.0",
+    "webpack-merge": "^5.0.0"
+  }
+}

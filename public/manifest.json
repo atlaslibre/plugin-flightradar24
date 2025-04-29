@@ -1,0 +1,51 @@
+{
+  "manifest_version": 3,
+  "name": "Flightradar24 ↔ AtlasLibre",
+  "description": "AtlasLibre Plugin for Flightradar24",
+  "version": "1.0.1",
+  "options_ui": {
+    "page": "options.html"
+  },
+  "icons": {
+    "16": "icons/logo16.png",
+    "32": "icons/logo32.png",
+    "48": "icons/logo48.png",
+    "128": "icons/logo128.png"
+  },
+  "action": {},
+  "background": {
+    "service_worker": "js/background.js"
+  },
+  "permissions": [
+    "scripting",
+    "offscreen"
+  ],
+  "content_security_policy": {
+    "extension_pages": "worker-src 'self'; script-src 'self' 'wasm-unsafe-eval'"
+  },
+  "host_permissions": ["https://www.flightradar24.com//*"],
+  "externally_connectable": {
+    "matches": [
+      "https://globe.atlaslibre.com/*",
+      "http://localhost:5173/*"
+    ]
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.flightradar24.com/*"],
+      "js": ["js/isolation-bridge.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://www.flightradar24.com/*"],
+      "js": ["js/xhrpatch.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": ["https://globe.atlaslibre.com/*", "http://localhost:5173/*"],
+      "js": ["js/plugin-discovery.js"],
+      "run_at": "document_start"
+    }
+  ]
+}
