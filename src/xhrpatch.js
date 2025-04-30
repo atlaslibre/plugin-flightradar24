@@ -28,22 +28,34 @@
   const detailsHandler = (response) => {
     window.postMessage({
       type: "details",
-      data:  _arrayBufferToBase64(response)
+      data: _arrayBufferToBase64(response),
     });
   };
 
+  const followHandler = (response) => {
+    console.log(new TextDecoder().decode(response));
+  };
+
   const handlers = {
-    "fr24.feed.api.v1.Feed/Playback":
-      playbackHandler,
-    "fr24.feed.api.v1.Feed/LiveFeed":
-      liveHandler,
-    "fr24.feed.api.v1.Feed/FlightDetails":
-      detailsHandler,
+    "fr24.feed.api.v1.Feed/Playback": playbackHandler,
+    "fr24.feed.api.v1.Feed/LiveFeed": liveHandler,
+    "fr24.feed.api.v1.Feed/FlightDetails": detailsHandler,
   };
 
   const originalXhr = window.XMLHttpRequest.prototype.open;
 
   window.XMLHttpRequest.prototype.open = function () {
+    this.addEventListener("readystatechange", function (evt) {
+      if (
+        evt.currentTarget.readyState == 3 &&
+        this.responseURL.indexOf("FollowFlight") > 0
+      )
+        window.postMessage({
+          type: "follow",
+          data: evt.currentTarget.response,
+        });
+    });
+
     this.addEventListener("load", function () {
       for (const [prefix, handler] of Object.entries(handlers)) {
         if (this.responseURL.endsWith(prefix)) {

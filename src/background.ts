@@ -1,6 +1,11 @@
 import { setupOffscreenDocument } from "./db/offscreen-setup";
 import { executeQuery } from "./features/db-interface";
-import { handleDetailsUpdate, handleLiveUpdate, handlePlaybackUpdate } from "./features/update";
+import {
+  handleDetailsUpdate,
+  handleFollowUpdate,
+  handleLiveUpdate,
+  handlePlaybackUpdate,
+} from "./features/update";
 import { locate } from "./features/locate";
 import {
   generatePositionQuery,
@@ -91,6 +96,8 @@ chrome.runtime.onMessage.addListener(function (msg) {
     handlePlaybackUpdate(msg.data);
   } else if (msg.type === "details") {
     handleDetailsUpdate(msg.data);
+  } else if (msg.type === "follow") {
+    handleFollowUpdate(msg.data);
   }
 });
 

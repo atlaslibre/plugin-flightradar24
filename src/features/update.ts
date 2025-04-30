@@ -140,7 +140,11 @@ function readDetailsMore(tag: number, data: DetailsMore, pbf: Pbf) {
   if (tag === 1) data.hex = pbf.readVarint().toString(16);
   else if (tag === 2) data.reg = pbf.readString();
   else if (tag === 4) data.type = pbf.readString();
+}
 
+function readFollowMore(tag: number, data: DetailsMore, pbf: Pbf) {
+  if (tag === 1) data.hex = pbf.readVarint().toString(16);
+  else if (tag === 2) data.reg = pbf.readString();
 }
 
 function readDetailsFlight(tag: number, data: DetailsFlight, pbf: Pbf) {
@@ -152,6 +156,20 @@ function readDetailsUpdateMessage(tag: number, data: DetailsMessage, pbf: Pbf) {
   if (tag === 2)
     data.flight = pbf.readMessage<DetailsFlight>(readDetailsFlight, {});
   if (tag === 4)
+    data.current = pbf.readMessage<DetailsCurrent>(readDetailsCurrent, {});
+  if (tag === 6) {
+    if (data.positions === undefined) data.positions = [];
+    data.positions.push(
+      pbf.readMessage<DetailsPositions>(readDetailsPosition, {})
+    );
+  }
+}
+
+function readFollowUpdateMessage(tag: number, data: DetailsMessage, pbf: Pbf) {
+  if (tag === 1) data.more = pbf.readMessage<DetailsMore>(readFollowMore, {});
+  if (tag === 3)
+    data.flight = pbf.readMessage<DetailsFlight>(readDetailsFlight, {});
+  if (tag === 5)
     data.current = pbf.readMessage<DetailsCurrent>(readDetailsCurrent, {});
   if (tag === 6) {
     if (data.positions === undefined) data.positions = [];
@@ -203,8 +221,6 @@ export const handleLiveUpdate = (msg: string) => {
     console.log("live parse error", msg);
   }
 
-
-
   storeDataFrames(dataFrames);
   storePositionFrames(positionFrames);
 };
@@ -251,6 +267,7 @@ export const handlePlaybackUpdate = (msg: string) => {
       }
   } catch {
     console.log("playback parse error", msg);
+    return;
   }
 
   storeDataFrames(dataFrames);
@@ -312,7 +329,81 @@ export const handleDetailsUpdate = (msg: string) => {
       }
   } catch {
     console.log("details parse error", msg);
+    return;
   }
+
+  storeDataFrames(dataFrames);
+  storePositionFrames(positionFrames);
+};
+
+export const handleFollowUpdate = (msg: string) => {
+  const dataFrames: DataFrame[] = [];
+  const positionFrames: PositionFrame[] = [];
+
+  if (!msg.startsWith("AAAA")) 
+    return;
+
+  let buffer: ArrayBuffer;
+  try {
+    buffer = base64ToArrayBuffer(msg);
+  } catch {
+    // follow update not fully loaded yet
+    return;
+  }
+
+  try {
+    const details = new Pbf(buffer).readFields<DetailsMessage>(
+      readFollowUpdateMessage,
+      {}
+    );
+
+    if (!details.current) return;
+
+    dataFrames.push({
+      ts: details.current.ts!,
+      id: details.current.id!,
+      hex: details.more?.hex,
+      squawk: details.current.squawk,
+      flight: details.flight?.flight,
+      reg: details.more?.reg,
+      type: null,
+      source: "follow",
+    });
+
+    positionFrames.push({
+      ts: details.current.ts!,
+      id: details.current.id!,
+      lat: details.current.lat!,
+      lon: details.current.lon!,
+      callsign: details.current.callsign!,
+      alt: details.current.alt!,
+      speed: details.current.speed,
+      heading: details.current.track,
+      source: "follow",
+    });
+
+    if (details.positions)
+      for (let i = 0; i < details.positions.length; i++) {
+        const u = details.positions[i];
+
+        positionFrames.push({
+          ts: u.ts!,
+          id: details.current.id!,
+          lat: u.lat!,
+          lon: u.lon!,
+          callsign: details.current.callsign!,
+          alt: u.alt!,
+          speed: u.speed,
+          heading: u.track,
+          source: "follow",
+        });
+      }
+  } catch (e) {
+    console.log("follow parse error", e, msg);
+    return;
+  }
+
+  console.log(dataFrames, positionFrames);
 
   storeDataFrames(dataFrames);
   storePositionFrames(positionFrames);
