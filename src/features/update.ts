@@ -142,11 +142,6 @@ function readDetailsMore(tag: number, data: DetailsMore, pbf: Pbf) {
   else if (tag === 4) data.type = pbf.readString();
 }
 
-function readFollowMore(tag: number, data: DetailsMore, pbf: Pbf) {
-  if (tag === 1) data.hex = pbf.readVarint().toString(16);
-  else if (tag === 2) data.reg = pbf.readString();
-}
-
 function readDetailsFlight(tag: number, data: DetailsFlight, pbf: Pbf) {
   if (tag === 1) data.flight = pbf.readString();
 }
@@ -166,7 +161,7 @@ function readDetailsUpdateMessage(tag: number, data: DetailsMessage, pbf: Pbf) {
 }
 
 function readFollowUpdateMessage(tag: number, data: DetailsMessage, pbf: Pbf) {
-  if (tag === 1) data.more = pbf.readMessage<DetailsMore>(readFollowMore, {});
+  if (tag === 1) data.more = pbf.readMessage<DetailsMore>(readDetailsMore, {});
   if (tag === 3)
     data.flight = pbf.readMessage<DetailsFlight>(readDetailsFlight, {});
   if (tag === 5)
@@ -340,9 +335,6 @@ export const handleFollowUpdate = (msg: string) => {
   const dataFrames: DataFrame[] = [];
   const positionFrames: PositionFrame[] = [];
 
-  if (!msg.startsWith("AAAA")) 
-    return;
-
   let buffer: ArrayBuffer;
   try {
     buffer = base64ToArrayBuffer(msg);
@@ -352,10 +344,10 @@ export const handleFollowUpdate = (msg: string) => {
   }
 
   try {
-    const details = new Pbf(buffer).readFields<DetailsMessage>(
+    const details = new Pbf(buffer.slice(5)).readFields<DetailsMessage>(
       readFollowUpdateMessage,
       {}
-    );
+    ); 
 
     if (!details.current) return;
 
@@ -366,7 +358,7 @@ export const handleFollowUpdate = (msg: string) => {
       squawk: details.current.squawk,
       flight: details.flight?.flight,
       reg: details.more?.reg,
-      type: null,
+      type: details.more?.type,
       source: "follow",
     });
 
@@ -402,8 +394,6 @@ export const handleFollowUpdate = (msg: string) => {
     console.log("follow parse error", e, msg);
     return;
   }
-
-  console.log(dataFrames, positionFrames);
 
   storeDataFrames(dataFrames);
   storePositionFrames(positionFrames);
