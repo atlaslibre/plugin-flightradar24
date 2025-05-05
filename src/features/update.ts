@@ -95,8 +95,8 @@ function readUpdateFlightDetails(
 ) {
   if (tag === 1) data.flight = pbf.readString();
   else if (tag === 2) data.reg = pbf.readString();
-  else if (tag === 5) data.squawk = pbf.readVarint().toString(16);
-  else if (tag === 14) data.hex = pbf.readVarint().toString(16);
+  else if (tag === 5) data.squawk = pbf.readVarint().toString(16).padStart(4, "0");
+  else if (tag === 14) data.hex = pbf.readVarint().toString(16).padStart(6, "0");
 }
 
 function readLiveUpdateMessage(tag: number, data: FlightUpdate[], pbf: Pbf) {
@@ -133,11 +133,11 @@ function readDetailsCurrent(tag: number, data: DetailsCurrent, pbf: Pbf) {
   else if (tag === 6) data.speed = pbf.readVarint();
   else if (tag === 8) data.ts = Math.trunc(pbf.readVarint() / 1000);
   else if (tag === 10) data.callsign = pbf.readString();
-  else if (tag === 15) data.squawk = pbf.readVarint().toString(16);
+  else if (tag === 15) data.squawk = pbf.readVarint().toString(16).padStart(4, "0");
 }
 
 function readDetailsMore(tag: number, data: DetailsMore, pbf: Pbf) {
-  if (tag === 1) data.hex = pbf.readVarint().toString(16);
+  if (tag === 1) data.hex = pbf.readVarint().toString(16).padStart(6, "0");
   else if (tag === 2) data.reg = pbf.readString();
   else if (tag === 4) data.type = pbf.readString();
 }
